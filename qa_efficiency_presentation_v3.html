@@ -1,0 +1,3839 @@
+<!doctype html>
+
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>
+      반복 업무에서 벗어나,QA의 본질에 집중 - AI 활용 기반 QA 업무 자동화 도구
+      개발 및 실무 적용 사례
+    </title>
+    <!-- Modern Korean Typography WebFonts: Pretendard (Naver/Toss Standard) + Noto Sans KR -->
+    <link
+      as="style"
+      crossorigin=""
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+            :root {
+              --bg-dark: #0a0d12;
+              --bg-card: rgba(18, 24, 34, 0.85);
+              --bg-card-hover: rgba(26, 35, 50, 0.95);
+              --naver-green: #03c75a;
+              --naver-green-glow: rgba(3, 199, 90, 0.35);
+              --naver-green-light: #20e075;
+              --text-main: #f1f5f9;
+              --text-muted: #94a3b8;
+              --text-sub: #cbd5e1;
+              --border-dark: rgba(255, 255, 255, 0.08);
+              --border-green: rgba(3, 199, 90, 0.4);
+              --accent-blue: #38bdf8;
+              --accent-amber: #f59e0b;
+              --accent-rose: #f43f5e;
+              --font-sans:
+                "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system,
+                BlinkMacSystemFont, system-ui, Roboto, "Apple SD Gothic Neo",
+                sans-serif;
+            }
+
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+
+            body {
+              background-color: #03060a;
+              color: var(--text-main);
+              font-family: var(--font-sans);
+              overflow: hidden;
+              width: 100vw;
+              height: 100vh;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              user-select: none;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
+              letter-spacing: -0.025em;
+              word-break: keep-all;
+            }
+
+            /* 1920x1080 Stage Auto-scaling */
+            #presentation-stage {
+              width: 1920px;
+              height: 1080px;
+              background: radial-gradient(
+                circle at 50% 15%,
+                #13221b 0%,
+                #0a0f16 55%,
+                #05070a 100%
+              );
+              position: absolute;
+              transform-origin: center center;
+              display: flex;
+              flex-direction: column;
+              box-shadow: 0 0 80px rgba(0, 0, 0, 0.9);
+              overflow: hidden;
+            }
+
+            /* Top Header Bar */
+            .top-bar {
+              height: 72px;
+              padding: 0 48px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-bottom: 1px solid var(--border-dark);
+              background: rgba(10, 13, 18, 0.6);
+              backdrop-filter: blur(12px);
+              z-index: 20;
+            }
+
+            .brand-logo {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            }
+
+            .brand-icon {
+              width: 32px;
+              height: 32px;
+              background: var(--naver-green);
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 900;
+              font-size: 19px;
+              color: #000;
+              box-shadow: 0 0 16px var(--naver-green-glow);
+            }
+
+            .brand-text {
+              font-size: 20px;
+              font-weight: 700;
+              letter-spacing: 0.5px;
+              color: #fff;
+            }
+
+            .header-nav {
+              display: flex;
+              align-items: center;
+              gap: 24px;
+            }
+
+            .timer-badge {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 6px 16px;
+              background: rgba(255, 255, 255, 0.05);
+              border: 1px solid var(--border-dark);
+              border-radius: 20px;
+              font-size: 15px;
+              color: var(--text-sub);
+            }
+
+            .slide-counter {
+              font-size: 16px;
+              font-weight: 600;
+              color: var(--naver-green);
+              background: rgba(3, 199, 90, 0.1);
+              padding: 6px 16px;
+              border-radius: 20px;
+              border: 1px solid var(--border-green);
+            }
+
+            /* Main Slide Canvas Area */
+            .slide-viewport {
+              flex: 1;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .slide-page {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              padding: 44px 56px 36px 56px;
+              opacity: 0;
+              pointer-events: none;
+              transform: translateY(20px) scale(0.99);
+              transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+              display: flex;
+              flex-direction: column;
+            }
+
+            .slide-page.active {
+              opacity: 1;
+              pointer-events: auto;
+              transform: translateY(0) scale(1);
+            }
+
+            /* Slide Header Area */
+            .slide-header {
+              margin-bottom: 26px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+            }
+
+            .slide-tag-row {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 8px;
+            }
+
+            .ratio-tag {
+              font-size: 13px;
+              font-weight: 700;
+              padding: 4px 12px;
+              border-radius: 6px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+
+            .tag-feature {
+              background: rgba(56, 189, 248, 0.15);
+              color: var(--accent-blue);
+              border: 1px solid rgba(56, 189, 248, 0.4);
+            }
+
+            .tag-outcome {
+              background: rgba(3, 199, 90, 0.18);
+              color: var(--naver-green-light);
+              border: 1px solid var(--border-green);
+            }
+
+            .tag-neutral {
+              background: rgba(255, 255, 255, 0.08);
+              color: var(--text-sub);
+              border: 1px solid var(--border-dark);
+            }
+
+            .time-allotment {
+              font-size: 14px;
+              color: var(--text-muted);
+            }
+
+            .slide-title {
+              font-size: 58px;
+              font-weight: 800;
+              letter-spacing: -0.03em;
+              color: #ffffff;
+              line-height: 1.25;
+              word-break: keep-all;
+            }
+
+            .slide-subtitle {
+              font-size: 19px;
+              color: var(--text-muted);
+              margin-top: 6px;
+              font-weight: 400;
+              word-break: keep-all;
+            }
+
+            /* Content Layout Grids */
+            .slide-body {
+              flex: 1;
+              display: flex;
+              gap: 32px;
+              min-height: 0;
+            }
+
+            /* Cards & Glassmorphism */
+            .card {
+              background: var(--bg-card);
+              border: 1px solid var(--border-dark);
+              border-radius: 18px;
+              padding: 28px;
+              line-height: 1.5; /* 新增：行间距 */
+              transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            }
+
+            .card:hover {
+              background: var(--bg-card-hover);
+              border-color: var(--border-green);
+              transform: translateY(-4px);
+              box-shadow: 0 16px 40px rgba(3, 199, 90, 0.12);
+            }
+
+            .card-title {
+              font-size: 40px;
+              font-weight: 700;
+             /* line-height: 1.5; /* 新增 */
+              color: #fff;
+              margin-bottom: 50px;
+              display: flex;
+              gap: 12px;
+              letter-spacing: -0.02em;
+            }
+
+            .card-title .icon {
+              color: var(--naver-green);
+              font-size: 30px;
+            }
+
+            /* Large Numbers & Stat Badges */
+            .stat-hero {
+              display: flex;
+              align-items: baseline;
+              gap: 8px;
+              margin: 10px 0;
+            }
+
+            .stat-number {
+              font-size: 64px;
+              font-weight: 900;
+              line-height: 1;
+              color: var(--naver-green);
+              text-shadow: 0 0 24px var(--naver-green-glow);
+              font-family: var(--font-sans);
+              letter-spacing: -0.04em;
+            }
+
+            .stat-unit {
+              font-size: 24px;
+              font-weight: 700;
+              color: var(--text-sub);
+              letter-spacing: -0.02em;
+            }
+
+            .stat-desc {
+              font-size: 16px;
+              color: var(--text-muted);
+              line-height: 1.5;
+              word-break: keep-all;
+            }
+
+            /* Nested Two-Tier Bullet Hierarchy (Requested by User) */
+            .bullet-group-list {
+              list-style: none;
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+            }
+
+            .bullet-group-item {
+              display: flex;
+              flex-direction: column;
+              gap: 5px;
+            }
+
+            .bullet-group-title {
+              display: flex;
+              align-items: center;
+              gap: 30px;
+              font-size: 28px;
+              font-weight: 700;
+              color: #ffffff;
+              letter-spacing: -0.025em;
+              line-height: 2;
+              word-break: keep-all;
+            }
+
+            .bullet-group-title .bullet-marker {
+              color: var(--naver-green);
+              font-size: 16px;
+              line-height: 1;
+            }
+
+            .bullet-group-content {
+              display: flex;
+              align-items: flex-start;
+              gap: 8px;
+              padding-left: 20px;
+              font-size: 20px;
+              line-height: 1.55;
+              color: var(--text-sub);
+              letter-spacing: -0.02em;
+              word-break: keep-all;
+            }
+
+            .bullet-group-content .sub-marker {
+              color: var(--text-muted);
+              font-size: 20px;
+              line-height: 1.55;
+              flex-shrink: 0;
+              /*  align-self: flex-start; /* 新增：顶部对齐 */ */
+            }
+
+            /* Image Display & Clean Lightbox Framing */
+            .image-container {
+              position: relative;
+              border-radius: 14px;
+              overflow: hidden;
+              border: 1px solid var(--border-dark);
+              background: #06090e;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: zoom-in;
+              transition: all 0.3s ease;
+            }
+
+            .image-container:hover {
+              border-color: var(--naver-green);
+              box-shadow: 0 8px 30px rgba(3, 199, 90, 0.2);
+            }
+
+            .image-container img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+              transition: transform 0.4s ease;
+            }
+
+            .image-container:hover img {
+              transform: scale(1.02);
+            }
+
+            /* Completely hide provenance tags on slides as requested */
+            .provenance-tag {
+              display: none !important;
+            }
+
+            /* Upload Fallback Card for missing images */
+            .upload-fallback-card {
+              width: 100%;
+              height: 100%;
+              min-height: 220px;
+              border: 2px dashed rgba(255, 255, 255, 0.2);
+              border-radius: 14px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 24px;
+              text-align: center;
+              background: rgba(255, 255, 255, 0.02);
+              transition: all 0.3s;
+              cursor: pointer;
+            }
+
+            .upload-fallback-card:hover {
+              border-color: var(--naver-green);
+              background: rgba(3, 199, 90, 0.05);
+            }
+
+            .upload-icon {
+              font-size: 36px;
+              color: var(--text-muted);
+              margin-bottom: 12px;
+            }
+
+            .upload-title {
+              font-size: 17px;
+              font-weight: 700;
+              color: #fff;
+              margin-bottom: 6px;
+              word-break: keep-all;
+            }
+
+            .upload-desc {
+              font-size: 13px;
+              color: var(--text-muted);
+              line-height: 1.4;
+              word-break: keep-all;
+            }
+
+            /* Bottom Control Bar */
+            .bottom-bar {
+              height: 64px;
+              padding: 0 48px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-top: 1px solid var(--border-dark);
+              background: rgba(10, 13, 18, 0.7);
+              backdrop-filter: blur(12px);
+              z-index: 20;
+            }
+
+            .progress-track {
+              flex: 1;
+              max-width: 680px;
+              height: 6px;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 4px;
+              margin: 0 32px;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .progress-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #20e075, #03c75a);
+              box-shadow: 0 0 12px var(--naver-green-glow);
+              border-radius: 4px;
+              transition: width 0.3s ease;
+              width: 8.33%;
+            }
+
+            .control-actions {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+
+            .btn-nav {
+              background: rgba(255, 255, 255, 0.06);
+              border: 1px solid var(--border-dark);
+              color: #fff;
+              padding: 8px 18px;
+              border-radius: 10px;
+              font-size: 15px;
+              font-weight: 600;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              transition: all 0.2s;
+              letter-spacing: -0.02em;
+            }
+
+            .btn-nav:hover {
+              background: rgba(3, 199, 90, 0.15);
+              border-color: var(--naver-green);
+              color: var(--naver-green-light);
+            }
+
+            /* Lightbox Modal */
+            #lightbox-modal {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              background: rgba(0, 0, 0, 0.92);
+              backdrop-filter: blur(16px);
+              z-index: 9999;
+              display: none;
+              align-items: center;
+              justify-content: center;
+              cursor: zoom-out;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+              overflow: hidden;
+            }
+
+            #lightbox-modal.active {
+              display: flex;
+              opacity: 1;
+            }
+
+            #lightbox-image {
+              max-width: 90vw;
+              max-height: 88vh;
+              object-fit: contain;
+              border-radius: 12px;
+              box-shadow:
+                0 0 60px rgba(0, 0, 0, 0.8),
+                0 0 30px var(--naver-green-glow);
+              border: 1px solid var(--border-green);
+              transition: transform 0.3s;
+            }
+
+            .lightbox-close-hint {
+              position: absolute;
+              top: 32px;
+              right: 48px;
+              background: rgba(255, 255, 255, 0.1);
+              padding: 8px 18px;
+              border-radius: 20px;
+              color: #fff;
+              font-size: 14px;
+              border: 1px solid var(--border-dark);
+            }
+
+            #lightbox-image {
+              max-width: 90vw;
+              max-height: 85vh;
+              object-fit: contain;
+              cursor: zoom-in;
+              transform: scale(1);
+              transition: transform 0.2s ease;
+            user-select: none;
+            }
+
+      #lightbox-image.zoomed {
+        cursor: grab;
+      }
+
+      #lightbox-image.zoomed:active {
+        cursor: grabbing;
+      }
+
+            /* =================================
+               SHARED OUTCOME SLIDE SYSTEM
+               Slides 5 / 7 / 11 all answer the same question
+               ("what changed, and by how much?"), so they share one
+               component set instead of three copies:
+               label -> hero number -> before/after -> takeaway -> note
+            ================================= */
+            .roi-layout {
+              display: flex;
+              flex-direction: column;
+              gap: 24px;
+              height: 100%;
+              min-height: 0;
+            }
+
+            .roi-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              /* Lock the single implicit row to the grid's own height so cards
+                 stretch to fit the slide instead of growing past the footer. */
+              grid-template-rows: minmax(0, 1fr);
+              gap: 24px;
+              flex: 1;
+              min-height: 0;
+            }
+
+            .roi-card {
+              background: var(--bg-card);
+              border: 1px solid var(--border-dark);
+              border-radius: 20px;
+              padding: 38px 42px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              min-width: 0;
+              gap: 24px;
+              box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+              position: relative;
+            }
+
+            .roi-label {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              font-size: 40px;
+              font-weight: 700;
+              color: #ffffff;
+            }
+
+            .roi-label .icon {
+              font-size: 34px;
+            }
+
+            .roi-main {
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+            }
+
+            .roi-highlight {
+              display: flex;
+              align-items: baseline;
+              gap: 20px;
+            }
+
+            .roi-number {
+              font-size: 100px;
+              font-weight: 900;
+              letter-spacing: -5px;
+              line-height: 1;
+              color: var(--naver-green-light);
+              text-shadow: 0 0 28px var(--naver-green-glow);
+            }
+
+            .roi-unit {
+              font-size: 26px;
+              font-weight: 700;
+              color: var(--text-main);
+            }
+
+            .roi-desc {
+              font-size: 23px;
+              line-height: 1.7;
+              color: var(--text-sub);
+              word-break: keep-all;
+              max-width: 720px;
+            }
+
+            .roi-comparison {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 24px;
+              padding: 26px 32px;
+              background: rgba(255, 255, 255, 0.045);
+              border: 1px solid var(--border-dark);
+              border-radius: 16px;
+            }
+
+            .roi-comparison > div {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              min-width: 0;
+            }
+
+            .roi-comparison strong {
+              font-size: 30px;
+              font-weight: 800;
+              color: #ffffff;
+              white-space: nowrap;
+            }
+
+            .roi-caption {
+              font-size: 19px;
+              font-weight: 500;
+              color: var(--text-muted);
+            }
+
+            .roi-arrow {
+              font-size: 34px;
+              font-weight: 700;
+              color: var(--naver-green-light);
+              flex-shrink: 0;
+            }
+
+            .roi-footer {
+              padding: 25px 34px;
+              border-radius: 16px;
+              background: rgba(3, 199, 90, 0.09);
+              border: 1px solid var(--border-green);
+            }
+
+            .roi-footer-title {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              font-size: 25px;
+              font-weight: 800;
+              color: var(--naver-green-light);
+              margin-bottom: 12px;
+            }
+
+            .roi-footer-desc {
+              font-size: 21px;
+              line-height: 1.65;
+              color: var(--text-sub);
+            }
+
+            .roi-note {
+              font-size: 17px;
+              line-height: 1.5;
+              color: var(--text-muted);
+              padding-left: 4px;
+              opacity: 0.9;
+            }
+
+            /* Slide 5: screenshot framing for the (optional) evidence images */
+            #slide-5 .image-container {
+              flex: 1;
+              min-width: 0;
+              height: 100%;
+              overflow: hidden;
+              border-radius: 12px;
+            }
+
+            #slide-5 .image-container img {
+              display: block;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              object-position: center;
+            }
+
+            /* Slide 7: tighter rhythm — two cards plus a long takeaway band */
+            #slide-7 .roi-layout {
+              gap: 18px;
+            }
+
+            #slide-7 .roi-card {
+              padding: 30px 42px;
+            }
+
+            #slide-7 .roi-highlight {
+              flex-wrap: wrap;
+            }
+
+            #slide-7 .roi-desc {
+              max-width: none;
+            }
+
+            /* =================================
+               SLIDE 11 — THREE TOOLS AT A GLANCE
+               Same grammar as slides 5 / 7, compressed into a 3-up
+               comparison so the three tools can be read side by side.
+            ================================= */
+            .roi-grid--three {
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+              gap: 24px;
+            }
+
+            .roi-card--tool {
+              padding: 26px 28px 28px;
+              gap: 18px;
+              background:
+                radial-gradient(
+                  130% 100% at 100% 0%,
+                  rgba(3, 199, 90, 0.12),
+                  transparent 62%
+                ),
+                var(--bg-card);
+              box-shadow: 0 14px 36px rgba(0, 0, 0, 0.42);
+              overflow: hidden;
+              transition:
+                border-color 0.3s ease,
+                transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.3s ease;
+            }
+
+            /* Green hairline that anchors the top of every tool card */
+            .roi-card--tool::before {
+              content: "";
+              position: absolute;
+              top: 0;
+              left: 28px;
+              right: 28px;
+              height: 2px;
+              border-radius: 2px;
+              background: linear-gradient(
+                90deg,
+                var(--naver-green-light),
+                rgba(32, 224, 117, 0)
+              );
+              opacity: 0.55;
+              transition: opacity 0.3s ease;
+            }
+
+            .roi-card--tool:hover {
+              border-color: var(--border-green);
+              transform: translateY(-3px);
+              box-shadow: 0 18px 44px rgba(3, 199, 90, 0.16);
+            }
+
+            .roi-card--tool:hover::before {
+              opacity: 1;
+            }
+
+            .roi-tool-head {
+              display: flex;
+              align-items: flex-start;
+              gap: 14px;
+            }
+
+            .roi-tool-index {
+              flex-shrink: 0;
+              width: 44px;
+              height: 44px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 19px;
+              font-weight: 800;
+              letter-spacing: 0.01em;
+              color: var(--naver-green-light);
+              background: rgba(3, 199, 90, 0.14);
+              border: 1px solid var(--border-green);
+              box-shadow: inset 0 0 18px rgba(3, 199, 90, 0.18);
+            }
+
+            .roi-tool-kicker {
+              display: block;
+              font-size: 14px;
+              font-weight: 700;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: var(--text-muted);
+              margin-bottom: 6px;
+            }
+
+            .roi-tool-name {
+              font-size: 23px;
+              font-weight: 700;
+              line-height: 1.35;
+              letter-spacing: -0.02em;
+              color: #ffffff;
+              word-break: keep-all;
+            }
+
+            .roi-tool-metric {
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            }
+
+            /* Metric and comparison travel together and centre in the free space,
+               so the three cards keep the same rhythm at any text length. */
+            .roi-tool-main {
+              flex: 1;
+              min-height: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              gap: 18px;
+            }
+
+            .roi-tool-label {
+              font-size: 15px;
+              font-weight: 600;
+              letter-spacing: -0.01em;
+              color: var(--text-muted);
+            }
+
+            .roi-card--tool .roi-highlight {
+              gap: 12px;
+              align-items: baseline;
+              flex-wrap: wrap;
+            }
+
+            .roi-number--md {
+              font-size: 88px;
+              letter-spacing: -4px;
+              line-height: 1.1;
+            }
+
+            .roi-number-suffix {
+              font-size: 34px;
+              font-weight: 800;
+              letter-spacing: -1px;
+              margin-left: 2px;
+            }
+
+            .roi-card--tool .roi-unit {
+              font-size: 20px;
+            }
+
+            .roi-card--tool .roi-comparison {
+              padding: 18px 20px;
+              border-radius: 14px;
+              gap: 14px;
+            }
+
+            .roi-card--tool .roi-caption {
+              font-size: 14px;
+              letter-spacing: 0.01em;
+            }
+
+            .roi-card--tool .roi-comparison strong {
+              font-size: 25px;
+            }
+
+            .roi-card--tool .roi-arrow {
+              font-size: 26px;
+            }
+
+            .roi-value--after {
+              color: var(--naver-green-light) !important;
+              text-shadow: 0 0 18px rgba(3, 199, 90, 0.35);
+            }
+
+            .roi-card--tool .roi-desc {
+              max-width: none;
+              font-size: 16px;
+              line-height: 1.55;
+              padding-top: 14px;
+              border-top: 1px solid var(--border-dark);
+            }
+
+            /* Tool 3 compares two scopes, so its before/after stacks */
+            .roi-comparison--stack {
+              flex-direction: column;
+              align-items: stretch;
+              justify-content: flex-start;
+              gap: 12px;
+            }
+
+            /* The shared `.roi-comparison > div` rule stacks columns; single
+               compare rows are horizontal, so opt them back out. */
+            .roi-comparison--stack > .roi-compare-row {
+              flex-direction: row;
+              align-items: center;
+              justify-content: space-between;
+              gap: 10px;
+            }
+
+            .roi-compare-row {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              min-width: 0;
+            }
+
+            .roi-compare-row .roi-caption {
+              flex-shrink: 0;
+              padding: 2px 9px;
+              border-radius: 999px;
+              background: rgba(3, 199, 90, 0.14);
+              border: 1px solid var(--border-green);
+              color: var(--naver-green-light);
+              font-size: 13px;
+              font-weight: 700;
+              letter-spacing: 0.02em;
+            }
+
+            .roi-compare-row .roi-before {
+              font-size: 22px;
+              font-weight: 700;
+              color: var(--text-sub);
+              white-space: nowrap;
+            }
+
+            .roi-compare-row .roi-arrow {
+              font-size: 20px;
+            }
+
+            .roi-compare-row strong {
+              font-size: 24px;
+              font-weight: 800;
+              white-space: nowrap;
+            }
+
+            /* Staggered entrance keeps the three tools readable when the
+               slide appears, and is disabled for reduced motion / print. */
+            #slide-11 .roi-card--tool {
+              opacity: 0;
+              transform: translateY(16px);
+            }
+
+            #slide-11.active .roi-card--tool {
+              animation: roiToolRise 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            #slide-11.active .roi-card--tool:nth-child(2) {
+              animation-delay: 0.06s;
+            }
+
+            #slide-11.active .roi-card--tool:nth-child(3) {
+              animation-delay: 0.12s;
+            }
+
+            @keyframes roiToolRise {
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              #slide-11 .roi-card--tool,
+              #slide-11.active .roi-card--tool {
+                opacity: 1;
+                transform: none;
+                animation: none;
+              }
+            }
+
+            @media print {
+              #slide-11 .roi-card--tool {
+                opacity: 1 !important;
+                transform: none !important;
+                animation: none !important;
+              }
+            }
+
+
+
+            /* Slide 6: two-phase flow card, aligned with the deck typography */
+            #slide-6 .slide-body > .card:first-child {
+              flex: 1;
+              padding: 24px 26px;
+            }
+            #slide-6 .slide-body > .card:first-child .card-title {
+              font-size: 40px;
+              line-height: 1.25;
+              margin-bottom: 18px;
+              gap: 12px;
+            }
+            #slide-6 .phase-flow {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              min-height: 0;
+            }
+            #slide-6 .phase-panel {
+              background: rgba(255, 255, 255, 0.03);
+              padding: 17px 20px;
+              border-radius: 12px;
+              border: 1px solid var(--border-dark);
+            }
+            #slide-6 .phase-heading {
+              font-size: 28px;
+              line-height: 2;
+              font-weight: 700;
+              letter-spacing: -0.025em;
+              word-break: keep-all;
+            }
+            #slide-6 .phase-heading.phase-one { color: var(--accent-blue); }
+            #slide-6 .phase-heading.phase-two { color: var(--naver-green-light); }
+            #slide-6 .phase-copy {
+              margin-top: 8px;
+              font-size: 23px;
+              line-height: 1.7;
+              color: var(--text-sub);
+              letter-spacing: -0.02em;
+              word-break: keep-all;
+            }
+            #slide-6 .phase-copy strong {
+              color: var(--text-main);
+              font-weight: 700;
+            }
+            #slide-6 .phase-interval {
+              text-align: center;
+              color: var(--text-muted);
+              font-size: 18px;
+              line-height: 1.35;
+              font-weight: 700;
+              padding: 1px 8px;
+            }
+            #slide-6 .slide-body > .card:last-child {
+              flex: 1.2;
+              padding: 18px;
+            }
+            #slide-6 .slide-body > .card:last-child .card-title {
+              font-size: 40px;
+              line-height: 1.3;
+            }
+            @media (max-width: 900px) {
+              #slide-6 .phase-heading { font-size: 22px; }
+              #slide-6 .phase-copy { font-size: 20px; }
+              #slide-6 .phase-interval { font-size: 16px; }
+            }
+
+            /* Slide 9: Tool 3 outcome, using the same two-card composition as Slide 8 */
+            #slide-9-body { gap: 24px; }
+            #slide-9-body > .card { min-width: 0; }
+            #slide-9 .bullet-group-list { gap: 18px; }
+            /*#slide-9 .bullet-group-title { gap: 18px; font-size: 27px; line-height: 1.35; }
+            #slide-9 .bullet-group-content { font-size: 19px; line-height: 1.55; }*/
+            #slide-9 .s9-note {
+              margin-top: auto;
+              padding-top: 18px;
+              border-top: 1px solid var(--border-dark);
+              color: var(--text-muted);
+              font-size: 14px;
+              line-height: 1.45;
+            }
+            #slide-9 .s9-metric-stack {
+              display: flex;
+              flex: 1;
+              min-height: 0;
+              flex-direction: column;
+              gap: 18px;
+              margin-bottom: 24px;
+            }
+            #slide-9 .s9-metric-panel {
+              flex: 1;
+              min-height: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              gap: 24px;
+              padding: 38px 42px;
+              margin-bottom: 0;
+              border: 1px solid rgba(255, 255, 255, 0.12);
+              border-radius: 20px;
+              background: var(--bg-card);
+            }
+            #slide-9 .s9-metric-heading {
+              color: #fff;
+              font-size: 26px;
+              font-weight: 750;
+            }
+            #slide-9 .s9-metric-values {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+            }
+            #slide-9 .s9-metric-values > div {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              min-width: 0;
+            }
+            #slide-9 .s9-metric-caption {
+              color: var(--text-muted);
+              font-size: 16px;
+            }
+            #slide-9 .s9-metric-values strong {
+              color: #fff;
+              font-size: 29px;
+              font-weight: 850;
+              white-space: nowrap;
+            }
+            #slide-9 .s9-metric-values strong.s9-after {
+              color: var(--naver-green-light);
+              text-shadow: 0 0 18px var(--naver-green-glow);
+            }
+            #slide-9 .s9-metric-arrow {
+              color: var(--naver-green-light);
+              font-size: 30px;
+              font-weight: 800;
+              flex-shrink: 0;
+            }
+            #slide-9 .s9-takeaway {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              padding: 17px 20px;
+              border-radius: 14px;
+              background: rgba(3,199,90,0.09);
+              border: 1px solid var(--border-green);
+            }
+            #slide-9 .s9-takeaway strong {
+              color: var(--naver-green-light);
+              font-size: 19px;
+              line-height: 1.35;
+            }
+            #slide-9 .s9-takeaway span {
+              color: var(--text-sub);
+              font-size: 16px;
+              line-height: 1.45;
+            }
+            @media (max-width: 900px) {
+              #slide-9-body { flex-direction: column; }
+            }
+            /* Small variant of the shared tool badge, used by the roadmap labels */
+            .roi-tool-index--sm {
+              width: 34px;
+              height: 34px;
+              border-radius: 10px;
+              font-size: 15px;
+            }
+
+            /* =================================
+               SLIDE 12 — 2027 ROADMAP
+               Reuses the deck's shared tokens and the green
+               "takeaway band" (.roi-footer) for the closing line.
+               Grid: 1 label column + 4 quarter columns, 3 tool rows.
+            ================================= */
+            .roadmap-layout {
+              /* 계획 매트릭스가 최대한 커지도록, 마무리 카드는 내용 높이만큼만 */
+              display: grid;
+              grid-template-rows: minmax(0, 1fr) auto;
+              gap: 20px;
+              height: 100%;
+              min-height: 0;
+            }
+
+            .roadmap-grid {
+              min-height: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+
+            /* 분기 헤더와 각 도구 행은 같은 열 폭을 씁니다 */
+            .roadmap-head,
+            .roadmap-row {
+              display: grid;
+              grid-template-columns: 212px repeat(4, minmax(0, 1fr));
+              gap: 14px;
+            }
+
+            .roadmap-head {
+              flex: 0 0 auto;
+              padding: 0 15px;
+            }
+
+            /* 도구별 행 카드 — 왼쪽 색상 바로 세 도구를 구분합니다 */
+            .roadmap-row {
+              --tool: var(--naver-green);
+              flex: 1;
+              min-height: 0;
+              align-items: stretch;
+              padding: 9px 14px;
+              border: 1px solid var(--border-dark);
+              border-radius: 16px;
+              background: rgba(255, 255, 255, 0.022);
+              box-shadow: inset 3px 0 0 var(--tool);
+              transition:
+                border-color 0.25s ease,
+                background 0.25s ease;
+            }
+
+            .roadmap-row--2 {
+              --tool: var(--accent-blue);
+            }
+
+            .roadmap-row--3 {
+              --tool: var(--accent-amber);
+            }
+
+            .roadmap-row:hover {
+              border-color: var(--tool);
+              background: rgba(255, 255, 255, 0.035);
+            }
+
+            /* 행 색상에 맞춘 도구 번호 배지 */
+            .roadmap-row--1 .roi-tool-index--sm {
+              color: var(--naver-green-light);
+              background: rgba(3, 199, 90, 0.14);
+              border-color: rgba(3, 199, 90, 0.4);
+            }
+
+            .roadmap-row--2 .roi-tool-index--sm {
+              color: var(--accent-blue);
+              background: rgba(56, 189, 248, 0.14);
+              border-color: rgba(56, 189, 248, 0.4);
+            }
+
+            .roadmap-row--3 .roi-tool-index--sm {
+              color: var(--accent-amber);
+              background: rgba(245, 158, 11, 0.14);
+              border-color: rgba(245, 158, 11, 0.4);
+            }
+
+            .roadmap-quarter {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding-bottom: 10px;
+              border-bottom: 1px solid var(--border-dark);
+            }
+
+            .roadmap-quarter b {
+              font-size: 18px;
+              font-weight: 800;
+              letter-spacing: 0.06em;
+              color: var(--naver-green-light);
+            }
+
+            .roadmap-quarter span {
+              font-size: 16px;
+              color: var(--text-muted);
+            }
+
+            .roadmap-tool {
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              gap: 8px;
+              padding-right: 6px;
+            }
+
+            .roadmap-tool-row {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+
+            .roadmap-tool-name {
+              font-size: 19px;
+              font-weight: 700;
+              line-height: 1.3;
+              color: #ffffff;
+            }
+
+            .roadmap-tool-now {
+              font-size: 13.5px;
+              line-height: 1.4;
+              color: var(--text-muted);
+            }
+
+            /* One milestone cell per tool per quarter */
+            .roadmap-cell {
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              gap: 9px;
+              padding: 18px 20px;
+              border: 1px solid var(--border-dark);
+              border-radius: 14px;
+              background: rgba(255, 255, 255, 0.035);
+              transition:
+                border-color 0.25s ease,
+                background 0.25s ease;
+            }
+
+            .roadmap-cell:hover {
+              border-color: var(--border-green);
+              background: rgba(3, 199, 90, 0.06);
+            }
+
+            .roadmap-cell-title {
+              font-size: 21px;
+              font-weight: 700;
+              line-height: 1.35;
+              letter-spacing: -0.01em;
+              color: #ffffff;
+              word-break: keep-all;
+            }
+
+            .roadmap-cell-desc {
+              font-size: 15px;
+              line-height: 1.5;
+              color: var(--text-muted);
+              word-break: keep-all;
+            }
+
+            /* The single hard dependency of the year — Tool 2 행 색상 사용 */
+            .roadmap-cell--key {
+              border-color: rgba(56, 189, 248, 0.45);
+              background: rgba(56, 189, 248, 0.08);
+            }
+
+            .roadmap-cell--key .roadmap-flag {
+              color: var(--accent-blue);
+              background: rgba(56, 189, 248, 0.14);
+              border: 1px solid rgba(56, 189, 248, 0.35);
+            }
+
+            .roadmap-flag {
+              align-self: flex-start;
+              padding: 2px 9px;
+              border-radius: 999px;
+              background: rgba(3, 199, 90, 0.16);
+              color: var(--naver-green-light);
+              font-size: 12px;
+              font-weight: 700;
+              letter-spacing: 0.02em;
+            }
+
+            /* Closing band — same green band as the outcome slides */
+            .closing-band {
+              min-height: 0;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 40px;
+              padding: 18px 36px;
+            }
+
+            .closing-quote {
+              display: flex;
+              align-items: flex-start;
+              gap: 16px;
+              min-width: 0;
+            }
+
+            .closing-mark {
+              flex-shrink: 0;
+              font-size: 22px;
+              line-height: 1.2;
+              color: var(--naver-green-light);
+            }
+
+            .closing-quote p {
+              font-size: 30px;
+              font-weight: 800;
+              line-height: 1.3;
+              letter-spacing: -0.03em;
+              color: #ffffff;
+              word-break: keep-all;
+            }
+
+            .closing-sub {
+              margin-top: 4px;
+              font-size: 14px;
+              line-height: 1.5;
+              color: var(--text-sub);
+              word-break: keep-all;
+            }
+
+            .closing-side {
+              flex-shrink: 0;
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 8px;
+              text-align: right;
+            }
+
+            .closing-chip {
+              padding: 6px 16px;
+              border-radius: 999px;
+              border: 1px solid var(--border-green);
+              background: rgba(3, 199, 90, 0.14);
+              color: var(--naver-green-light);
+              font-size: 13px;
+              font-weight: 700;
+            }
+
+            .closing-note {
+              font-size: 12px;
+              line-height: 1.5;
+              color: var(--text-muted);
+            }
+
+            /* ①②③ → 하나의 플랫폼: the closing thesis as a small path */
+            .closing-path {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .closing-node {
+              width: 26px;
+              height: 26px;
+              border-radius: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+              font-weight: 800;
+              color: var(--naver-green-light);
+              background: rgba(3, 199, 90, 0.14);
+              border: 1px solid rgba(3, 199, 90, 0.35);
+            }
+
+            .closing-arrow {
+              margin: 0 6px;
+              font-size: 18px;
+              font-weight: 700;
+              color: var(--naver-green-light);
+            }
+
+            .closing-target {
+              font-size: 17px;
+              font-weight: 800;
+              color: #ffffff;
+            }
+
+            /* =================================
+               SLIDE 3 — DAY TIMELINE (horizontal)
+               세 단계를 왼쪽에서 오른쪽으로 읽는 타임라인.
+               1920×1080 고정 무대에 맞춰 3열 그리드로 배치합니다.
+            ================================= */
+            .day-body {
+              flex-direction: column;
+              gap: 20px;
+            }
+
+            .day-shell {
+              flex: 1;
+              min-height: 0;
+            }
+
+            .day-shell .card-title {
+              margin-bottom: 18px;
+            }
+
+            /* 하단 요약 밴드 — 다른 결과 슬라이드와 같은 컴포넌트 */
+            .day-summary {
+              flex: 0 0 auto;
+              padding: 18px 32px;
+            }
+
+            .day-summary .roi-footer-title {
+              margin-bottom: 6px;
+              font-size: 22px;
+            }
+
+            .day-summary .roi-footer-desc {
+              font-size: 17px;
+            }
+
+            .day-flow {
+              flex: 1;
+              min-height: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 22px;
+            }
+
+            .day-rail {
+              position: relative;
+              display: grid;
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+              align-items: end;
+            }
+
+            /* 세 지점을 잇는 가로 레일 */
+            .day-rail::before {
+              content: "";
+              position: absolute;
+              left: 16.66%;
+              right: 16.66%;
+              bottom: 19px;
+              height: 2px;
+              border-radius: 2px;
+              background: linear-gradient(
+                90deg,
+                var(--naver-green),
+                var(--accent-blue) 52%,
+                var(--accent-amber)
+              );
+              opacity: 0.5;
+            }
+
+            .day-stop {
+              --stage: var(--naver-green);
+              position: relative;
+              z-index: 1;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .day-stop:nth-child(2) {
+              --stage: var(--accent-blue);
+            }
+
+            .day-stop:nth-child(3) {
+              --stage: var(--accent-amber);
+            }
+
+            .day-stop-label {
+              font-size: 13px;
+              font-weight: 700;
+              letter-spacing: 0.04em;
+              color: var(--text-muted);
+            }
+
+            .day-dot {
+              width: 38px;
+              height: 38px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 16px;
+              font-weight: 800;
+              color: var(--stage);
+              background: #0b1017;
+              border: 2px solid var(--stage);
+              box-shadow: 0 0 0 6px #0a0d12;
+            }
+
+            .day-cards {
+              flex: 1;
+              min-height: 0;
+              display: grid;
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+              gap: 24px;
+            }
+
+            .day-step {
+              --stage: var(--naver-green);
+              position: relative;
+              overflow: hidden;
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              padding: 26px 28px;
+              border: 1px solid var(--border-dark);
+              border-top: 3px solid var(--stage);
+              border-radius: 16px;
+              background: rgba(255, 255, 255, 0.035);
+            }
+
+            .day-step:nth-child(2) {
+              --stage: var(--accent-blue);
+            }
+
+            .day-step:nth-child(3) {
+              --stage: var(--accent-amber);
+            }
+
+            /* 카드 우하단의 큰 단계 번호(장식) */
+            .day-step::after {
+              content: attr(data-step);
+              position: absolute;
+              right: 12px;
+              bottom: -30px;
+              font-size: 132px;
+              font-weight: 900;
+              line-height: 1;
+              letter-spacing: -0.05em;
+              color: var(--stage);
+              opacity: 0.12;
+              pointer-events: none;
+            }
+
+            .day-stage {
+              font-size: 13px;
+              font-weight: 800;
+              letter-spacing: 0.08em;
+              color: var(--stage);
+            }
+
+            .day-title {
+              font-size: 40px;
+              font-weight: 800;
+              line-height: 1.3;
+              letter-spacing: -0.02em;
+              color: #ffffff;
+              word-break: keep-all;
+            }
+
+            .day-tool {
+              font-size: 13px;
+              font-weight: 600;
+              color: var(--text-muted);
+            }
+
+            .day-desc {
+              margin-top: 2px;
+              font-size: 28px;
+              line-height: 1.6;
+              font-weight: bold;
+              color: #ffffff;;
+              word-break: keep-all;
+            }
+    </style>
+    <script>
+      // Universal Error Handler for Missing Images
+      function handleImgError(imgEl, uploadTitle, uploadDesc) {
+        const container = imgEl.parentElement;
+        if (!container) return;
+
+        const fileInputId =
+          "input_" + Math.random().toString(36).substring(2, 9);
+        const fallbackDiv = document.createElement("div");
+        fallbackDiv.className = "upload-fallback-card";
+        fallbackDiv.innerHTML = `
+        <input type="file" id="${fileInputId}" accept="image/*" style="display:none;" onchange="handleUserUpload(event, this)">
+        <div class="upload-icon">📷</div>
+        <div class="upload-title">${uploadTitle || "스크린샷 없음 (클릭하여 추가)"}</div>
+        <div class="upload-desc">${uploadDesc || "클릭하거나 로컬 이미지를 드래그하여 업로드"}</div>
+      `;
+        fallbackDiv.onclick = (e) => {
+          e.stopPropagation();
+          document.getElementById(fileInputId).click();
+        };
+
+        fallbackDiv.ondragover = (e) => {
+          e.preventDefault();
+          fallbackDiv.style.borderColor = "#03C75A";
+        };
+        fallbackDiv.ondragleave = (e) => {
+          e.preventDefault();
+          fallbackDiv.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        };
+        fallbackDiv.ondrop = (e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+              imgEl.src = evt.target.result;
+              imgEl.style.display = "block";
+              fallbackDiv.remove();
+            };
+            reader.readAsDataURL(e.dataTransfer.files[0]);
+          }
+        };
+
+        imgEl.style.display = "none";
+        container.appendChild(fallbackDiv);
+      }
+
+      function handleUserUpload(event, inputEl) {
+        if (inputEl.files && inputEl.files[0]) {
+          const reader = new FileReader();
+          const container = inputEl.closest(".image-container");
+          const img = container.querySelector("img");
+          const fallbackCard = container.querySelector(".upload-fallback-card");
+
+          reader.onload = function (e) {
+            img.src = e.target.result;
+            img.style.display = "block";
+            if (fallbackCard) fallbackCard.remove();
+          };
+          reader.readAsDataURL(inputEl.files[0]);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <!-- 1920x1080 Stage Container -->
+    <div id="presentation-stage">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="brand-logo">
+          <div class="brand-icon">N</div>
+          <div class="brand-text">2026Y Service TE @Workshop</div>
+        </div>
+        <div class="header-nav">
+          <div class="timer-badge">
+            <span>⏱️</span>
+            <span id="elapsed-time">00:00 / 10:00</span>
+          </div>
+          <div class="slide-counter" id="slide-num">SLIDE 01 / 12</div>
+        </div>
+      </header>
+      <!-- Slide Viewport -->
+      <main class="slide-viewport">
+        <!-- ==========================================
+           SLIDE 1: 발표 개요 (30초)
+           ========================================== -->
+        <section class="slide-page active" id="slide-1">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-neutral">발표 개요</span>
+                <span class="time-allotment">권장 시간: 35초</span>
+              </div>
+              <h1 class="slide-title">
+                반복 업무에서 벗어나, QA의 본질에 집중 <br />
+                AI 활용 기반 QA 업무 자동화 도구 개발 및 실무 적용 사례
+              </h1>
+            </div>
+          </div>
+          <div class="slide-body">
+            <div
+              class="card"
+              style="flex: 4; justify-content: center; padding: 40px"
+            >
+              <div
+                style="
+                  display: inline-block;
+                  background: rgba(3, 199, 90, 0.15);
+                  color: var(--naver-green-light);
+                  padding: 8px 18px;
+                  border-radius: 8px;
+                  font-weight: 700;
+                  margin-bottom: 24px;
+                  border: 1px solid var(--border-green);
+                  font-size: 17px;
+                "
+              >
+                3대 핵심 도구의 시너지 파이프라인
+              </div>
+              <h2
+                style="
+                  font-size: 50px;
+                  font-weight: 900;
+                  line-height: 1.25;
+                  margin-bottom: 24px;
+                  color: #fff;
+                "
+              >
+                매일 하던 일을 조금씩 줄여보기<br />수작업을 줄이고 확인은 더
+                쉽게
+              </h2>
+            </div>
+            <div
+              class="card"
+              style="
+                flex: 6;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+              "
+            >
+              <div
+                style="
+                  border-left: 4px solid var(--naver-green);
+                  padding-left: 18px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 14px;
+                    color: var(--naver-green);
+                    font-weight: 700;
+                  "
+                >
+                  Jira QA Verify &amp; Close Desk
+                </div>
+                <div
+                  style="
+                    font-size: 40px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-top: 4px;
+                  "
+                >
+                  TOOL 01 · Jira 이슈 검증 절차 개선 및 간편 종료
+                </div>
+              </div>
+              <div
+                style="
+                  border-left: 4px solid var(--accent-blue);
+                  padding-left: 18px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 14px;
+                    color: var(--accent-blue);
+                    font-weight: 700;
+                  "
+                >
+                  Biz TE Daily Report Workbench
+                </div>
+                <div
+                  style="
+                    font-size: 40px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-top: 4px;
+                  "
+                >
+                  TOOL 02 · Daily Report 자동집계
+                </div>
+              </div>
+              <div
+                style="
+                  border-left: 4px solid var(--accent-amber);
+                  padding-left: 18px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 14px;
+                    color: var(--accent-amber);
+                    font-weight: 700;
+                  "
+                >
+                  Jira Issue Inspector & KPI Dashboard
+                </div>
+                <div
+                  style="
+                    font-size: 40px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-top: 4px;
+                  "
+                >
+                  TOOL 03 · Jira Reopened Issue 카운팅 로직 해결
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 2: 3대 시나리오 핵심 페인포인트 (60초)
+           (小分点布局优化: - 标题 \n   - 内容)
+           ========================================== -->
+        <section class="slide-page" id="slide-2">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">핵심 문제점</span>
+                <span class="time-allotment">권장 시간: 60초</span>
+              </div>
+              <h1 class="slide-title">
+                3대 핵심 업무 시나리오의 고질적 페인포인트
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                반복적인 수작업, 분산된 정보, 안전 게이트 부재로 인한 심각한
+                품질 리스크와 협업 비효율
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body">
+            <!-- Tool 1 Pain -->
+            <div class="card" style="flex: 1">
+              <div class="card-title">
+                <span class="icon">⚠️</span>
+                <span
+                  >시나리오 1:<br />
+                  Jira 이슈 종료의 한계</span
+                >
+              </div>
+              <ul class="bullet-group-list">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "도대체 몇 번 빌드에서
+                    고쳐진 거야?"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 댓글 10여 개를 위아래로
+                    스크롤하며 테스트 환경과 앱 버전 찾느라 진 빠짐
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "캡처하고, 바탕화면
+                    저장하고, 또 드래그..."
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 증적 하나 올리려고 임시
+                    파일 저장했다 지우는 단순 반복 클릭의 연속
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "어? 이 이슈 언제
+                    해결로 변경되는 거야?"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 사람마다 보고 양식이
+                    제각각이라 핵심 정보가 누락되고 다시 문의 오는 번거로움
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "제대로 확인 안 됐는데
+                    Close 눌러버렸다!"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 필수 체크 장치가 없어
+                    실수로 조기 종결(오종결) 처리되어 운영 배포 후 장애로 직결
+                  </div>
+                  -->
+                </li>
+              </ul>
+            </div>
+            <!-- Tool 2 Pain -->
+            <div class="card" style="flex: 1">
+              <div class="card-title">
+                <span class="icon">⚠️</span>
+                <span
+                  >시나리오 2: <br />
+                  Daily Report 취합의 한계</span
+                >
+              </div>
+              <ul class="bullet-group-list">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "퇴근 1시간 전, 또
+                    TestRail 폴더 4개 뒤져야 해?"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> Daily, Normal, Regression,
+                    Hotfix 폴더를 일일이 열어보며 수동으로 진척률 계산
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "어제 밤 10시에 올라온
+                    이슈, 오늘 치야 어제 치야?"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 24시간 기준 날짜 경계를
+                    눈대중으로 계산하다 보니 이슈가 중복되거나 누락됨
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "이창 저창 띄워놓고
+                    복붙만 하루 30분"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> TestRail, Jira 데이터를
+                    사내 리포트 시스템에 옮겨 적느라 매일 아까운 실무 시간 소모
+                  </div>
+                  -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "어?! 내가 방금 수정한
+                    거 누가 덮어썼어!"
+                  </div>
+                  <!--
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 여러 명이 동시에 사내
+                    시스템에 수기 입력하다 동료가 공들여 쓴 내용을 날려먹는
+                    대참사
+                  </div>
+                  -->
+                </li>
+              </ul>
+            </div>
+            <!-- Tool 3 Pain -->
+            <div class="card" style="flex: 1">
+              <div class="card-title">
+                <span class="icon">⚠️</span>
+                <span
+                  >시나리오 3: <br />
+                  지표 집계 및 측정의 한계</span
+                >
+              </div>
+              <ul class="bullet-group-list">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "이 이슈가 도대체 몇번
+                    리오픈된거야?<br />
+                    내가 한거 맞아?"
+                  </div>
+                  <!--
+                <div class="bullet-group-content"><span class="sub-marker">-</span> Reopen 집계 기준이 사람마다 달라 회의 때마다 유관 부서와 불필요한 기싸움·논쟁.</div>
+                --></li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "매일 JQL 짜고 매월
+                    리오픈 통계하는 게 시간만 낭비하네..."
+                  </div>
+                  <!--
+                <div class="bullet-group-content"><span class="sub-marker">-</span> 일일 이슈 트래킹부터 월말 리오픈율 결산까지, 반복적인 쿼리 작성과 수작업 집계에 과도한 공수 투입.</div>
+              -->
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> "그래서 이 숫자, 진짜
+                    믿을 수 있는 데이터 맞아요?"
+                  </div>
+                  <!--
+                <div class="bullet-group-content"><span class="sub-marker">-</span> 수기로 취합한 정적 통계다 보니 변경 이력 추적이 어렵고 조직 간 지표 신뢰도 하락.</div>
+              -->
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 3: 엔지니어링 전체 파이프라인 (40초)
+           ========================================== -->
+        <section class="slide-page" id="slide-3">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">하루 업무 흐름</span>
+                <span class="time-allotment">권장 시간: 40초</span>
+              </div>
+              <h1 class="slide-title">세 도구로 이어지는 하루 업무 흐름</h1>
+            </div>
+          </div>
+          <div class="slide-body day-body">
+            <div class="card day-shell">
+              <!--
+              <div class="card-title">
+                <span class="icon">🔄</span>
+                <span>하루 업무 타임라인</span>
+              </div>
+              -->
+              <div class="day-flow">
+                <!-- 시간축: 왼쪽 → 오른쪽 -->
+                <div class="day-rail">
+                  <div class="day-stop">
+                    <span class="day-stop-label">Tool 1</span>
+                    <span class="day-dot">1</span>
+                  </div>
+                  <div class="day-stop">
+                    <span class="day-stop-label">Tool 2</span>
+                    <span class="day-dot">2</span>
+                  </div>
+                  <div class="day-stop">
+                    <span class="day-stop-label">Tool 3</span>
+                    <span class="day-dot">3</span>
+                  </div>
+                </div>
+
+                <div class="day-cards">
+                  <article class="day-step" data-step="1">
+                    <div class="day-stage">STAGE 1</div>
+                    <h3 class="day-title">수정 확인 및 이슈 종료</h3>
+                    <div class="day-tool">Jira QA Verify &amp; Close Desk</div>
+                    <p class="day-desc">
+                      전날 해결된 이슈를 메일 대신 Work Desk에서 바로 확인하고
+                      안전하게 일괄 종료합니다.
+                    </p>
+                  </article>
+
+                  <article class="day-step" data-step="2">
+                    <div class="day-stage">STAGE 2</div>
+                    <h3 class="day-title">일과 마감 집계 및 배포</h3>
+                    <div class="day-tool">Biz TE Daily Report Workbench</div>
+                    <p class="day-desc">
+                      마감 시점에 TestRail 진행률 &amp; Jira 24시간 이슈를
+                      자동으로 모아 Daily Report 취합 툴로 동기화합니다.
+                    </p>
+                  </article>
+
+                  <article class="day-step" data-step="3">
+                    <div class="day-stage">STAGE 3</div>
+                    <h3 class="day-title">KPI 확인</h3>
+                    <div class="day-tool">
+                      Jira Issue Inspector &amp; KPI Dashboard
+                    </div>
+                    <p class="day-desc">
+                      5초 만에 KPI 대시보드에서 필요한 수치를 확인하고 Team
+                      View와 CSV로 정리합니다.<br />
+                      크롬 확장 프로그램으로 Jira 화면에서 바로 KPI를 확인할
+                      수도 있습니다.
+                    </p>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+            <div class="roi-footer day-summary">
+              <div class="roi-footer-title">
+                <span>✦</span>
+                세 도구의 공통 목적 — 반복 업무에서 벗어나기
+              </div>
+              <div class="roi-footer-desc">
+                이슈 종료 → 일과 마감 집계 → KPI 확인. 역할은 달라도, 손으로
+                하던 반복 업무를 줄인다는 목적은 같습니다.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+           SLIDE 4: [도구 1] Jira QA Verify & Close Desk (기능 45초)
+           ========================================== -->
+        <section class="slide-page" id="slide-4">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-feature">도구 1 기능</span>
+                <span class="time-allotment">권장 시간: 45초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 1】Jira QA Verify &amp; Close Desk
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                흩어져 있던 Jira 이슈 확인부터 검증 결과 작성, 증적 첨부와
+                종료까지 한 화면에서 처리할 수 있도록 만든 도구입니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body">
+            <div class="card" style="flex: 1">
+              <div class="card-title">
+                <span class="icon">🛠️</span>
+                <span>반복해서 하던 Jira 작업을 한곳에서</span>
+              </div>
+              <ul class="bullet-group-list" style="margin-top: 8px">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >1.</span
+                    >
+                    담당 이슈를 한눈에 확인
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 담당자를 선택하면 내
+                    이슈를 모아서 볼 수 있어 매번 JQL을 작성하거나 여러 화면을
+                    찾아다닐 필요가 없습니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >2.</span
+                    >
+                    Resolved와 Mentioned로 구분
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> QA 확인이 필요한 이슈와
+                    개발자가 댓글이나 멘션으로 확인을 요청한 이슈를 나눠서 볼 수
+                    있습니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >3.</span
+                    >
+                    댓글에서 브랜치와 테스트 환경 확인
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 최신 댓글에 있는
+                    브랜치명과 테스트 환경 정보를 자동으로 찾아 보여줘 댓글을
+                    하나씩 읽지 않아도 됩니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >4.</span
+                    >
+                    증적 첨부부터 이슈 종료/재오픈까지
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 스크린샷을 바로 붙여넣고,
+                    정해진 템플릿으로 결과를 작성한 뒤 여러 이슈를 한 번에
+                    종료/재오픈할 수 있습니다.
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="card" style="flex: 1.2; padding: 18px">
+              <div class="card-title" style="margin-bottom: 8px">
+                <span class="icon">💻</span>
+                <span>실제 업무에서 사용하는 화면</span>
+              </div>
+              <div
+                class="image-container"
+                onclick="openLightbox(this)"
+                style="flex: 1"
+              >
+                <img
+                  alt="Production Desk"
+                  onerror="
+                    handleImgError(
+                      this,
+                      '프로덕션 데스크 실물 전경',
+                      '실제 QA 업무 환경 사진',
+                    )
+                  "
+                  src="images/imagesslide3_actual_production_desk.gif"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 5: [도구 1] Safe Close 7단계 품질 안전 게이트 (성과 40초)
+           ========================================== -->
+        <section class="slide-page" id="slide-5">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">도구 1 적용 효과</span>
+                <span class="time-allotment">권장 시간: 40초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 1】반복 작업은 줄이고, 회귀 테스트 시간은 확보하고
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                기존 작업 방식과 Workbench 사용 시 예상 소요 시간을
+                비교했습니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body roi-layout">
+            <div class="roi-grid">
+              <!-- 单个 Issue -->
+              <div class="roi-card">
+                <div class="roi-label">
+                  <span class="icon">⏱️</span>
+                  <span>ISSUE당 예상 처리 시간</span>
+                </div>
+                <div class="roi-main">
+                  <div class="roi-highlight">
+                    <span class="roi-number">~72%</span>
+                    <span class="roi-unit">처리 시간 단축 예상</span>
+                  </div>
+                  <div class="roi-desc">
+                    기존 약 3분이 소요되던 작업이 Workbench 사용 시 약 50초로
+                    단축될 것으로 예상됩니다.
+                  </div>
+                </div>
+                <div class="roi-comparison">
+                  <div>
+                    <span class="roi-caption">기존 작업 방식</span>
+                    <strong>약 3분</strong>
+                  </div>
+                  <span class="roi-arrow">→</span>
+                  <div>
+                    <span class="roi-caption">Workbench 사용 시</span>
+                    <strong>약 50초</strong>
+                  </div>
+                </div>
+              </div>
+              <!-- 团队整体 -->
+              <div class="roi-card">
+                <div class="roi-label">
+                  <span class="icon">📊</span>
+                  <span>과제당 팀 전체 예상 절감 시간</span>
+                </div>
+                <div class="roi-main">
+                  <div class="roi-highlight">
+                    <span class="roi-number">~1.8</span>
+                    <span class="roi-unit">시간 절약 예상</span>
+                  </div>
+                  <div class="roi-desc">
+                    과제 테스트 기간에 팀 전체 50건을 처리하는 기준으로, 기존 약
+                    150분에서 사용 후 약 42분으로 줄어들 것으로 예상됩니다.
+                  </div>
+                </div>
+                <div class="roi-comparison">
+                  <div>
+                    <span class="roi-caption">기존 (50건 기준)</span>
+                    <strong>150분</strong>
+                  </div>
+                  <span class="roi-arrow">→</span>
+                  <div>
+                    <span class="roi-caption">Workbench 사용 시</span>
+                    <strong>약 42분</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 价值总结 -->
+            <div class="roi-footer">
+              <div class="roi-footer-title">
+                <span>✦</span>
+                확보한 시간을 핵심 테스트에 재투자
+              </div>
+              <div class="roi-footer-desc">
+                반복적인 이슈 확인과 입력, 파일 저장에 쓰던 시간을 줄이고 핵심
+                기능 회귀 테스트와 추가 검증에 더 집중할 수 있습니다.
+              </div>
+            </div>
+            <!-- 测算说明 -->
+            <div class="roi-note">
+              ※ 기존 작업 시간과 예상 자동화 소요 시간을 기준으로 산출한
+              추정치이며, 실제 절감 효과는 전체 작업 흐름을 포함한 실측을 통해
+              검증할 예정입니다.
+            </div>
+          </div>
+        </section>
+        <!--
+           <section class="slide-page" id="slide-5">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">도구 1 적용 효과 </span>
+                <span class="time-allotment">권장 시간: 55초</span>
+              </div>
+              <h1 class="slide-title">
+              【도구 1】반복 작업은 줄이고, 회귀 테스트 시간은 확보하고
+              </h1>
+              <p class="slide-subtitle">
+                이슈 1건을 처리하는 데 걸리는 시간과 버전별 팀 전체 작업 시간을
+                비교했습니다.
+              </p>
+            </div>
+          </div>
+          <div class="slide-body">
+            <div
+              class="card"
+              style="flex: 0.95; justify-content: space-between"
+            >
+              <div>
+                <div class="card-title">
+                  <span class="icon">⏱️</span>
+                  <span>이슈 처리 시간 비교</span>
+                </div>
+                <div class="stat-hero">
+                  <span class="stat-number">~80%</span>
+                  <span class="stat-unit">처리 시간 절감</span>
+                </div>
+                <div class="stat-desc">
+                  이슈 1건당 평균 약 3분 30초 걸리던 작업이 Workbench 사용 후 약
+                  30~50초로 줄었습니다.
+                </div>
+
+                <div class="stat-hero" style="margin-top: 24px">
+                  <span class="stat-number"
+                    >~2<span style="font-size: 38px">시간</span></span
+                  >
+                  <span class="stat-unit">과제당 팀 전체 절감 시간</span>
+                </div>
+                <div class="stat-desc">
+                  과제 테스트 기간에 팀 전체 40건을 처리하는 기준으로, 기존 약
+                  140분에서 사용 후 약 26분으로 줄어듭니다.
+                </div>
+              </div>
+
+              <div
+                style="
+                  background: rgba(3, 199, 90, 0.08);
+                  padding: 14px 18px;
+                  border-radius: 12px;
+                  border: 1px solid var(--border-green);
+                "
+              >
+                <div
+                  style="
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: var(--naver-green);
+                  "
+                >
+                  절약한 시간은 이렇게 활용할 수 있습니다:
+                </div>
+                <div
+                  style="
+                    font-size: 14px;
+                    color: var(--text-sub);
+                    margin-top: 4px;
+                    line-height: 1.5;
+                  "
+                >
+                  반복적인 이슈 확인과 입력, 파일 저장에 쓰던 시간을 줄이고 핵심
+                  기능 회귀 테스트와 추가 확인에 더 사용할 수 있습니다.
+                </div>
+              </div>
+            </div>
+            <!--
+            <div class="card" style="flex: 1.35; padding: 18px">
+              <div class="card-title" style="margin-bottom: 8px">
+                <span class="icon">🔒</span>
+                <span>7단계 안전 검증 모달 & 표준 작업 워크벤치</span>
+              </div>
+              <div style="display: flex; gap: 14px; flex: 1">
+                <div
+                  class="image-container"
+                  style="flex: 1.2"
+                  onclick="openLightbox(this)"
+                >
+                  <img
+                    src="images/04_safe_close_modal.png"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'Safe Close 7단계 모달',
+                        '품질 안전 검증 팝업창',
+                      )
+                    "
+                    alt="Safe Close Modal"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  style="flex: 1"
+                  onclick="openLightbox(this)"
+                >
+                  <img
+                    src="images/01_main_workbench_v2.png"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'QA Workbench 메인 화면',
+                        '가이드형 표준 작업 프로토타입',
+                      )
+                    "
+                    alt="QA Workbench Prototype"
+                  />
+                </div>
+              </div> 
+            </div>
+             
+          </div>
+        </section>
+        -->
+        <!-- ==========================================
+           SLIDE 6: [도구 2] Biz TE Daily Report 자동화 파이프라인 (기능 55초)
+           ========================================== -->
+        <section class="slide-page" id="slide-6">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-feature">도구 2 기능</span>
+                <span class="time-allotment">권장 시간: 55초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 2】Biz TE Daily Report 자동화 파이프라인
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                TestRail 진행 상황을 먼저 반영하고, 구성원의 수동 보완 시간을
+                거친 뒤 Jira 이슈 데이터를 추가하는 2단계 자동화입니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body">
+            <div class="card" style="flex: 1">
+              <div class="card-title">
+                <span class="icon">⚙️</span>
+                <span>2단계 자동화 흐름</span>
+              </div>
+              <div class="phase-flow">
+                <div class="phase-panel">
+                  <div class="phase-heading phase-one">
+                    16:30 · PHASE 1 — TestRail 진행 상황 수집
+                  </div>
+                  <div class="phase-copy">
+                    <strong>프로젝트/마일스톤/TestPlan별 자동 탐색</strong>: 팀
+                    당일 활성 과제와 개인별 TC 진행률을 수집합니다.<br />
+                    <strong>기준 스냅샷 저장</strong>: 수집한 데이터를 사내
+                    Daily Report에 먼저 반영하고, 이후 변경 여부를 비교할 16:30
+                    Baseline을 생성합니다.
+                  </div>
+                </div>
+                <div class="phase-interval">
+                  ↓ 45분간 구성원이 직접 내용 보완 및 진행률 조정
+                </div>
+                <div class="phase-panel">
+                  <div class="phase-heading phase-two">
+                    17:15 · PHASE 2 — Jira 이슈 집계 및 Rule B 반영
+                  </div>
+                  <div class="phase-copy">
+                    <strong>정확한 최근 24시간 데이터 집계</strong>: 날짜 경계를
+                    기준으로 Jira 이슈를 수집해 Daily Report용 이슈 데이터를
+                    정리합니다.<br />
+                    <strong>Rule B 충돌 보호</strong>: 16:30 스냅샷과 현재
+                    내용을 비교해, 수동 수정이 있으면 그대로 보존하고 수정이
+                    없을 때만 이슈 데이터를 보충합니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="flex: 1.2; padding: 18px">
+              <div class="card-title" style="margin-bottom: 8px">
+                <span class="icon">📊</span>
+                <span>7개 프로젝트의 동기화 상태를 한눈에 확인</span>
+              </div>
+              <div
+                class="image-container"
+                onclick="openLightbox(this)"
+                style="flex: 1"
+              >
+                <img
+                  alt="Biz TE Dashboard"
+                  onerror="
+                    handleImgError(
+                      this,
+                      'Biz TE 대시보드 전경',
+                      '다중 프로젝트 상태 현황판',
+                    )
+                  "
+                  src="images/workbench_dashboard_snapshot.png"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 7: [도구 2] Rule B 작업 보호 & 7개 프로젝트 재해복구 (성과 45초)
+           ========================================== -->
+        <section class="slide-page" id="slide-7">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">도구 2 적용 효과</span>
+                <span class="time-allotment">권장 시간: 45초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 2】수동 수정은 보호하고, 7개 프로젝트는 한곳에서 관리
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                기준 스냅샷과 현재 데이터를 비교해 수동 수정 내용을 보호하고,
+                여러 프로젝트의 실행 상태와 재처리를 통합 관리합니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body roi-layout">
+            <div class="roi-grid">
+              <div class="roi-card">
+                <div class="roi-label">
+                  <span class="icon">🛡️</span>
+                  <span>Rule B · 수동 수정 보호</span>
+                </div>
+                <div class="roi-main">
+                  <div class="roi-highlight">
+                    <span class="roi-number">16:30</span>
+                    <span class="roi-unit">Baseline 기준</span>
+                  </div>
+                  <div class="roi-desc">
+                    17:15 현재 데이터와 기준 스냅샷을 비교합니다. 변경이
+                    감지되면 구성원이 직접 수정한 내용을 덮어쓰지 않고, 변경이
+                    없을 때만 Jira 이슈 집계 값을 보충합니다.
+                  </div>
+                </div>
+                <div class="roi-comparison">
+                  <div>
+                    <span class="roi-caption">수동 수정 감지 시</span>
+                    <strong>기존 내용 보존</strong>
+                  </div>
+                  <span class="roi-arrow">→</span>
+                  <div>
+                    <span class="roi-caption">수정이 없을 때</span>
+                    <strong>Jira 값 보충</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="roi-card">
+                <div class="roi-label">
+                  <span class="icon">📊</span>
+                  <span>멀티 프로젝트 운영 효율</span>
+                </div>
+                <div class="roi-main">
+                  <div class="roi-highlight">
+                    <span class="roi-number">7</span>
+                    <span class="roi-unit">개 프로젝트 통합 관리</span>
+                  </div>
+                  <div class="roi-desc">
+                    프로젝트별 동기화 상태를 확인하고, 문제가 발생하면 전체 또는
+                    개별 프로젝트의 Phase 1·Phase 2를 선택해 다시 실행할 수
+                    있습니다.
+                  </div>
+                </div>
+                <div class="roi-comparison">
+                  <div>
+                    <span class="roi-caption">기존 작성 시간</span>
+                    <strong>누적 약 60분</strong>
+                  </div>
+                  <span class="roi-arrow">→</span>
+                  <div>
+                    <span class="roi-caption">자동화 적용 시</span>
+                    <strong>약 3분</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="roi-footer">
+              <div class="roi-footer-title">
+                <span>✦</span>
+                운영 안정성을 위한 점검·추적 기능
+              </div>
+              <div class="roi-footer-desc">
+                DRY-RUN 사전 점검 · Baseline과 현재 값의 차이 확인 · Audit Log를
+                통한 요청 시간 및 응답 추적 · Phase별 재실행 지원
+              </div>
+            </div>
+            <div class="roi-note">
+              ※ 60분 → 약 3분은 7개 프로젝트를 대상으로 Phase 1·Phase 2를 모두
+              실행하는 기준으로 산출한 수치입니다.
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 8: [도구 3] 이슈 스마트 중복 체크 & Reporter Reopen (기능 50초)
+           ========================================== -->
+        <section class="slide-page" id="slide-8">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-feature">도구 3 기능</span>
+                <span class="time-allotment">권장 시간: 50초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 3】Reporter 기준 Reopen 판정과 QA KPI 자동 산출
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                Jira 변경 이력에 기반해 QA의 유효 Reopen을 구분하고, 개인·팀
+                단위 월간 품질 지표를 일관된 기준으로 집계합니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body">
+            <div class="card" style="flex: 1.05">
+              <div class="card-title">
+                <span class="icon">🎯</span>
+                <span>핵심 기능 및 판정 기준</span>
+              </div>
+              <ul class="bullet-group-list" style="margin-top: 10px">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> Reporter 기준 Reopen
+                    판정
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> Jira Changelog의 상태 변경
+                    이력과 작업자를 확인해 원래 Reporter가 수행한 유효한 재검증
+                    흐름을 식별합니다. 개발·PM의 일반 상태 변경과 구분하는 데
+                    초점을 둡니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> 유효 산출량 자동 계산
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span>
+                    '총 등록 + 재등록 - Not a Bug' 기준으로 유효하지 않는 이슈를
+                    제외한 유효 산출량을 계산합니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> 개인 월간 KPI 조회
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 사번 또는 이름으로 개인의
+                    유효 산출량, Reopen 비율 및 유형별 추이를 확인합니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> 팀 단위 통합 집계 및
+                    내보내기
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> QA Lead가 팀원별 지표를
+                    일괄 조회·비교하고, 월간 결과를 CSV로 내보내 보관할 수
+                    있습니다.
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="card" style="flex: 1.15; padding: 18px">
+              <div class="card-title" style="margin-bottom: 8px">
+                <span class="icon">📊</span>
+                <span>Reopen 이력 · KPI 카드 · Team View</span>
+              </div>
+              <div style="display: flex; gap: 12px; flex: 1; min-height: 0">
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="Reporter Reopen 이력"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'Reporter Reopen 이력',
+                        'Jira 변경 이력 기반 판정 화면',
+                      )
+                    "
+                    src="images/slide4-reopen-detector.png"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="개인 KPI 카드"
+                    onerror="
+                      handleImgError(
+                        this,
+                        '개인 KPI 카드',
+                        '유효 산출량 및 Reopen 지표',
+                      )
+                    "
+                    src="images/slide4-kpi-cards.png"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1.2"
+                >
+                  <img
+                    alt="팀 월간 KPI 대시보드"
+                    onerror="
+                      handleImgError(
+                        this,
+                        '팀 월간 KPI 대시보드',
+                        '팀원별 지표 비교 및 집계 화면',
+                      )
+                    "
+                    src="images/slide6-team-view.png"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 9: [도구 3] 5초 KPI 즉시 산출 & 전사 팀 거버넌스 가시화 (성과 45초)
+           ========================================== -->
+        <section class="slide-page" id="slide-9">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">도구 3 적용 효과</span>
+                <span class="time-allotment">권장 시간: 45초</span>
+              </div>
+              <h1 class="slide-title">
+                【도구 3】월간 KPI 집계 시간을 줄이고, 품질 지표의 일관성을
+                높이다
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                개인별 수작업 집계부터 팀 전체 취합까지 반복되는 시간을
+                단축하고, 동일한 판정 기준으로 월간 품질 데이터를 확인합니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body" id="slide-9-body">
+            <div class="card" style="flex: 1.05; padding: 24px 26px">
+              <div
+                class="card-title"
+                style="line-height: 1.25; margin-bottom: 50px"
+              >
+                <span class="icon">⏱️</span>
+                <span>집계 시간 단축 효과</span>
+              </div>
+              <ul class="bullet-group-list" style="gap: 22px; margin-top: 4px">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> 개인 월간 KPI 조회
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 기존 JQL 작성과 Excel 수기
+                    정산에 약 15~20분 걸리던 개인 월간 지표 확인을, 사번 또는
+                    이름 입력만으로 약 5초에 조회합니다.
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span class="bullet-marker">▪</span> 팀 월간 KPI 취합
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> QA Lead가 팀원을 한 명씩
+                    조회·정리하던 2~3시간의 취합 작업을 팀 대시보드에서 일괄
+                    확인하고, 비교 및 CSV 내보내기로 이어갑니다.
+                  </div>
+                </li>
+              </ul>
+              <!--
+              <div class="s9-note">
+                ※ 시간 수치는 중국어 Tool3 원본 자료에 기재된 작업 시간
+                기준입니다. 실제 절감 효과는 팀 규모, 조회 범위 및 운영 환경에
+                따라 달라질 수 있으며, 동일 조건의 실측으로 검증이 필요합니다.
+              </div>
+              -->
+            </div>
+            <div class="card" style="flex: 1.15; padding: 24px 26px">
+              <div
+                class="card-title"
+                style="font-size: 40px; line-height: 1.25; margin-bottom: 50px"
+              >
+                <span class="icon">📊</span>
+                <span>기존 수작업 대비 도구 3 적용</span>
+              </div>
+              <div class="s9-metric-stack">
+                <div class="s9-metric-panel">
+                  <div class="s9-metric-heading">개인 월간 KPI 조회 시간</div>
+                  <div class="s9-metric-values">
+                    <div>
+                      <span class="s9-metric-caption">기존 수작업</span
+                      ><strong>15~20분</strong>
+                    </div>
+                    <span class="s9-metric-arrow">→</span>
+                    <div>
+                      <span class="s9-metric-caption">도구 3 사용 시</span
+                      ><strong class="s9-after">약 5초</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="s9-metric-panel">
+                  <div class="s9-metric-heading">팀 월간 KPI 취합 시간</div>
+                  <div class="s9-metric-values">
+                    <div>
+                      <span class="s9-metric-caption">기존 수작업</span
+                      ><strong>2~3시간</strong>
+                    </div>
+                    <span class="s9-metric-arrow">→</span>
+                    <div>
+                      <span class="s9-metric-caption">도구 3 사용 시</span
+                      ><strong class="s9-after">약 1분</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="s9-takeaway">
+                <strong>절감한 시간을 핵심 테스트와 품질 분석에 재투자</strong>
+                <span
+                  >반복적인 JQL 작성, 수기 검산 및 팀원별 취합 부담을 줄여 이슈
+                  분석, 품질 개선 및 핵심 검증에 더 집중할 수 있습니다.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 10: Before vs After 실제 비교 (성과 45초)
+           ========================================== -->
+        <section class="slide-page" id="slide-10">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">종합 비교</span>
+                <span class="time-allotment">권장 시간: 45초</span>
+              </div>
+              <h1 class="slide-title">
+                일하는 방식의 새로운 진화: Before vs After 실제 비교
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                직접 확인하고 옮겨 적던 작업을 줄이고, 필요한 내용은 한 화면에서
+                확인할 수 있게 됐습니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body">
+            <!-- Before Column -->
+            <div
+              class="card"
+              style="
+                flex: 1;
+                border-color: rgba(244, 63, 94, 0.4);
+                background: rgba(30, 15, 20, 0.7);
+              "
+            >
+              <div
+                class="card-title"
+                style="color: var(--accent-rose); margin-bottom: 25px"
+              >
+                <span class="icon">❌</span>
+                <span>BEFORE: 기존 수작업 업무 방식</span>
+              </div>
+              <ul class="bullet-group-list" style="margin-bottom: 16px">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--accent-rose)"
+                      >▪</span
+                    >
+                    이슈 확인 및 종료
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 이슈를 하나씩 검색; 댓글을
+                    직접 확인; 증적과 결과를 수동으로 정리; 이슈를 하나씩 종료
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--accent-rose)"
+                      >▪</span
+                    >
+                    Daily Report 작성
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 여러 프로젝트의 업무
+                    내용을 직접 취합; 수기 입력과 수동 검산으로 작성;기존 작성
+                    내용과 보고서 형식을 매번 확인
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--accent-rose)"
+                      >▪</span
+                    >
+                    KPI 통계 확인
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 복잡한 JQL 및 수동
+                    Reopen이력 관리; 주관적 기준 차이로 인한 소모적 논쟁 발생
+                  </div>
+                </li>
+              </ul>
+              <div style="display: flex; gap: 8px; flex: 1">
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="Before TestRail"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'Before: mail에 jira 이슈 확인',
+                        '수기 탐색 화면',
+                      )
+                    "
+                    src="images/mail_jira_issue.png"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="Before Intranet"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'Before: 사내 시스템 수기 입력',
+                        '수작업 복사 입력 화면',
+                      )
+                    "
+                    src="images/testrail_porject_confirm.png"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="Before Excel JQL"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'Before: 수작업 Excel 및 JQL 통계',
+                        '복잡한 엑셀 수동 집계 화면',
+                      )
+                    "
+                    src="images/jira_reopen.png"
+                  />
+                </div>
+              </div>
+            </div>
+            <!-- After Column -->
+            <div
+              class="card"
+              style="
+                flex: 1;
+                border-color: var(--border-green);
+                background: rgba(10, 28, 20, 0.7);
+              "
+            >
+              <div
+                class="card-title"
+                style="color: var(--naver-green-light); margin-bottom: 25px"
+              >
+                <span class="icon">✅</span>
+                <span>AFTER: 3대 중추 연계 자동화 방식</span>
+              </div>
+              <ul class="bullet-group-list" style="margin-bottom: 16px">
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >▪</span
+                    >
+                    이슈 확인 및 종료
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 담당 이슈를 한눈에 확인;
+                    필요한 정보를 자동으로 확인; 증적 첨부와 결과 작성 간소화;
+                    여러 이슈를 한 번에 종료
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >▪</span
+                    >
+                    Daily Report 작성
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> 2-Phase 파이프라인 초단위
+                    수집; Rule B로 수기 내용 덮어쓰기 보호; 7개 프로젝트 병렬
+                    관리
+                  </div>
+                </li>
+                <li class="bullet-group-item">
+                  <div class="bullet-group-title">
+                    <span
+                      class="bullet-marker"
+                      style="color: var(--naver-green-light)"
+                      >▪</span
+                    >
+                    KPI 통계 확인
+                  </div>
+                  <div class="bullet-group-content">
+                    <span class="sub-marker">-</span> Reporter Reopen 심층 추적;
+                    chorme extension으로 KPI 카드 조회; 팀 단위 통합 대시보드로
+                    일괄 집계
+                  </div>
+                </li>
+              </ul>
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  flex: 1;
+                  min-width: 0;
+                  min-height: 0;
+                  overflow: hidden;
+                "
+              >
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="After Desk"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'After: 프로덕션 데스크 환경',
+                        '실제 작업 데스크 전경',
+                      )
+                    "
+                    src="images/slide3_actual_production_desk.jpg"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="After Workbench"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'After: Daily Report 대시보드',
+                        'Daily Report 통합 대시보드',
+                      )
+                    "
+                    src="images/workbench_dashboard_snapshot.png"
+                  />
+                </div>
+                <div
+                  class="image-container"
+                  onclick="openLightbox(this)"
+                  style="flex: 1"
+                >
+                  <img
+                    alt="After Quality Tool"
+                    onerror="
+                      handleImgError(
+                        this,
+                        'After: 원클릭 품질 메트릭 대시보드',
+                        '품질 대시보드 화면',
+                      )
+                    "
+                    src="images/slide5-after-tool.png"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- ==========================================
+           SLIDE 11: 3가지 도구 적용 성과 요약 (45초)
+           ========================================== -->
+        <section class="slide-page" id="slide-11">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-outcome">정량적 가치</span>
+                <span class="time-allotment">권장 시간: 45초</span>
+              </div>
+              <h1 class="slide-title">
+                3가지 도구로 줄인 반복 업무와 확보한 시간
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                각 업무의 기존 처리 방식과 도구 적용 후 소요 시간을
+                비교했습니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body roi-layout">
+            <div class="roi-grid roi-grid--three">
+              <!-- Tool 1 -->
+              <article class="roi-card roi-card--tool">
+                <div class="roi-tool-head">
+                  <span class="roi-tool-index">01</span>
+                  <div>
+                    <span class="roi-tool-kicker">Tool 1</span>
+                    <h2 class="roi-tool-name">
+                      Jira QA Verify &amp; Close Desk
+                    </h2>
+                  </div>
+                </div>
+                <div class="roi-tool-main">
+                  <div class="roi-tool-metric">
+                    <span class="roi-tool-label">Issue 1건 처리 시간</span>
+                    <div class="roi-highlight">
+                      <span class="roi-number roi-number--md"
+                        >약 72<span class="roi-number-suffix">%</span></span
+                      >
+                      <span class="roi-unit">단축 예상</span>
+                    </div>
+                  </div>
+                  <div class="roi-comparison">
+                    <div>
+                      <span class="roi-caption">기존</span>
+                      <strong>약 3분</strong>
+                    </div>
+                    <span class="roi-arrow">→</span>
+                    <div>
+                      <span class="roi-caption">도구 적용</span>
+                      <strong class="roi-value--after">약 50초</strong>
+                    </div>
+                  </div>
+                </div>
+                <p class="roi-desc">이슈 확인, 증적 처리 및 종료 작업 간소화</p>
+              </article>
+
+              <!-- Tool 2 -->
+              <article class="roi-card roi-card--tool">
+                <div class="roi-tool-head">
+                  <span class="roi-tool-index">02</span>
+                  <div>
+                    <span class="roi-tool-kicker">Tool 2</span>
+                    <h2 class="roi-tool-name">Biz TE Daily Report Workbench</h2>
+                  </div>
+                </div>
+                <div class="roi-tool-main">
+                  <div class="roi-tool-metric">
+                    <span class="roi-tool-label">Daily Report 작성 시간</span>
+                    <div class="roi-highlight">
+                      <span class="roi-number roi-number--md"
+                        >57<span class="roi-number-suffix">분</span></span
+                      >
+                      <span class="roi-unit">절감</span>
+                    </div>
+                  </div>
+                  <div class="roi-comparison">
+                    <div>
+                      <span class="roi-caption">기존</span>
+                      <strong>약 60분</strong>
+                    </div>
+                    <span class="roi-arrow">→</span>
+                    <div>
+                      <span class="roi-caption">도구 적용</span>
+                      <strong class="roi-value--after">약 3분</strong>
+                    </div>
+                  </div>
+                </div>
+                <p class="roi-desc">7개 프로젝트 데이터 취합 및 보고서 작성</p>
+              </article>
+
+              <!-- Tool 3 -->
+              <article class="roi-card roi-card--tool">
+                <div class="roi-tool-head">
+                  <span class="roi-tool-index">03</span>
+                  <div>
+                    <span class="roi-tool-kicker">Tool 3</span>
+                    <h2 class="roi-tool-name">
+                      Jira Issue Inspector & KPI Dashboard
+                    </h2>
+                  </div>
+                </div>
+                <div class="roi-tool-main">
+                  <div class="roi-tool-metric">
+                    <span class="roi-tool-label">월간 KPI 조회 및 취합</span>
+                    <div class="roi-highlight">
+                      <span class="roi-number roi-number--md"
+                        >약 5<span class="roi-number-suffix">초</span></span
+                      >
+                      <span class="roi-unit">개인 조회</span>
+                    </div>
+                  </div>
+                  <div class="roi-comparison roi-comparison--stack">
+                    <div class="roi-compare-row">
+                      <span class="roi-caption">개인</span>
+                      <span class="roi-before">15~20분</span>
+                      <span class="roi-arrow">→</span>
+                      <strong class="roi-value--after">약 5초</strong>
+                    </div>
+                    <div class="roi-compare-row">
+                      <span class="roi-caption">팀</span>
+                      <span class="roi-before">2~3시간</span>
+                      <span class="roi-arrow">→</span>
+                      <strong class="roi-value--after">약 1분</strong>
+                    </div>
+                  </div>
+                </div>
+                <p class="roi-desc">
+                  동일한 기준으로 월간 품질 지표 조회 및 비교
+                </p>
+              </article>
+            </div>
+
+            <div class="roi-footer">
+              <div class="roi-footer-title">
+                <span>✦</span>
+                반복 작업은 줄이고, 핵심 테스트와 품질 분석에 더 집중
+              </div>
+              <div class="roi-footer-desc">
+                이슈 처리, Daily Report 작성, 월간 KPI 조회는 서로 다른 업무와
+                집계 주기이므로 절감 시간을 합산하지 않았습니다.
+              </div>
+            </div>
+
+            <div class="roi-note">
+              ※ 시간 수치는 기존 자료의 작업 시간 기준이며, 실제 효과는 동일
+              조건의 실측으로 확인이 필요합니다.
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+           SLIDE 12: 2027 로드맵 — 세 도구를 하나의 품질 플랫폼으로 (50초)
+           구성: 3개 도구 × 4분기 매트릭스(7) + 마무리 카드(3)
+           수정 시: 계획은 .roadmap-cell 안의 제목/설명만 바꾸면 됩니다.
+           ========================================== -->
+        <section class="slide-page" id="slide-12">
+          <div class="slide-header">
+            <div>
+              <div class="slide-tag-row">
+                <span class="ratio-tag tag-neutral">2027 로드맵</span>
+                <span class="time-allotment">권장 시간: 50초</span>
+              </div>
+              <h1 class="slide-title">
+                내년 계획: 세 도구를 같은 방향으로 한 걸음씩
+              </h1>
+              <!--
+              <p class="slide-subtitle">
+                각 도구는 따로 키우되, 판정 기준과 데이터는 한 곳으로 모읍니다.
+              </p>
+              -->
+            </div>
+          </div>
+          <div class="slide-body roadmap-layout">
+            <!-- 3 tools × 4 quarters -->
+            <div class="roadmap-grid">
+              <!-- 분기 헤더 -->
+              <div class="roadmap-head">
+                <div class="roadmap-corner"></div>
+                <div class="roadmap-quarter"><b>Q1</b><span>기반 정비</span></div>
+                <div class="roadmap-quarter"><b>Q2</b><span>전환 · AI</span></div>
+                <div class="roadmap-quarter"><b>Q3</b><span>공통화</span></div>
+                <div class="roadmap-quarter"><b>Q4</b><span>확산</span></div>
+              </div>
+
+              <!-- Tool 1 -->
+              <div class="roadmap-row roadmap-row--1">
+                <div class="roadmap-tool">
+                  <div class="roadmap-tool-row">
+                    <span class="roi-tool-index roi-tool-index--sm">01</span>
+                    <span class="roadmap-tool-name">Verify &amp; Close</span>
+                  </div>
+                  <div class="roadmap-tool-now">현재 · Web 워크벤치 운영 중</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">v2.0 정식 출시</div>
+                  <div class="roadmap-cell-desc">크롬 옆 패널에서 바로 사용</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">AI 기능 3종 시험</div>
+                  <div class="roadmap-cell-desc">
+                    긴 리뷰 요약 · 체크리스트 · 점검
+                  </div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">7단계 흐름 시험</div>
+                  <div class="roadmap-cell-desc">
+                    바뀐 내용부터 확인까지 한 번에
+                  </div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">Safe Close 적용</div>
+                  <div class="roadmap-cell-desc">닫기 전 7단계 최종 점검</div>
+                </div>
+              </div>
+
+              <!-- Tool 2 -->
+              <div class="roadmap-row roadmap-row--2">
+                <div class="roadmap-tool">
+                  <div class="roadmap-tool-row">
+                    <span class="roi-tool-index roi-tool-index--sm">02</span>
+                    <span class="roadmap-tool-name">Daily Report</span>
+                  </div>
+                  <div class="roadmap-tool-now">현재 · TestRail 기반 운영 중</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">Xray 영향도 확인</div>
+                  <div class="roadmap-cell-desc">TestRail 쓰는 부분 정리</div>
+                </div>
+                <div class="roadmap-cell roadmap-cell--key">
+                  <span class="roadmap-flag">핵심</span>
+                  <div class="roadmap-cell-title">Xray 전환 완료</div>
+                  <div class="roadmap-cell-desc">
+                    7개 프로젝트 리포트 다시 만들기
+                  </div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">공통 구조 정리</div>
+                  <div class="roadmap-cell-desc">
+                    설정만 바꿔 다른 프로젝트 적용
+                  </div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">부서 대시보드</div>
+                  <div class="roadmap-cell-desc">여러 프로젝트를 한 화면에서</div>
+                </div>
+              </div>
+
+              <!-- Tool 3 -->
+              <div class="roadmap-row roadmap-row--3">
+                <div class="roadmap-tool">
+                  <div class="roadmap-tool-row">
+                    <span class="roi-tool-index roi-tool-index--sm">03</span>
+                    <span class="roadmap-tool-name">Issue &amp; KPI</span>
+                  </div>
+                  <div class="roadmap-tool-now">현재 · Reopen 판정 운영 중</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">이슈 중복 검사 출시</div>
+                  <div class="roadmap-cell-desc">보완 후 Q1 배포</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">AI 판정으로 확장</div>
+                  <div class="roadmap-cell-desc">비슷한 이슈를 의미로 구분</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">월말 KPI 자동 발송</div>
+                  <div class="roadmap-cell-desc">정리한 지표를 메일로 전달</div>
+                </div>
+                <div class="roadmap-cell">
+                  <div class="roadmap-cell-title">개인별 QA 지표</div>
+                  <div class="roadmap-cell-desc">유효 산출량 · Reopen 지표</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Closing band (shared green takeaway style) -->
+            <div class="roi-footer closing-band">
+              <div class="closing-quote">
+                <span class="closing-mark">✦</span>
+                <div>
+                  <p>“도구는 셋, 기준은 하나.”</p>
+                  <!--
+                  <div class="closing-sub">
+                    세 도구를 하나로 묶어, 내년에는 부서가 같이 쓰는 품질
+                    플랫폼으로 갑니다.
+                  </div>
+                  -->
+                </div>
+              </div>
+              <div class="closing-side">
+                <div class="closing-path">
+                  <span class="closing-node">01</span>
+                  <span class="closing-node">02</span>
+                  <span class="closing-node">03</span>
+                  <span class="closing-arrow">→</span>
+                  <span class="closing-target">같은 기준</span>
+                </div>
+                <span class="closing-chip">Q&amp;A 환영</span>
+                <span class="closing-note">
+                  ※ AI 기능은 사내 AI 리소스 지원이 전제입니다.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <!-- Bottom Bar Controls -->
+      <footer class="bottom-bar">
+        <div style="font-size: 14px; color: var(--text-muted)">
+          ⌨️ 키보드 단축키 지원: <strong>← / →</strong> 슬라이드 이동,
+          <strong>Space</strong> 다음, <strong>F</strong> 전체화면
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-bar"></div>
+        </div>
+        <div class="control-actions">
+          <button
+            class="btn-nav"
+            id="btn-fullscreen"
+            onclick="toggleFullscreen()"
+            title="전체화면 전환 (F)"
+          >
+            ⛶ 전체화면
+          </button>
+          <button class="btn-nav" id="btn-prev" onclick="prevSlide()">
+            ◀ 이전 슬라이드
+          </button>
+          <button
+            class="btn-nav"
+            id="btn-next"
+            onclick="nextSlide()"
+            style="
+              background: rgba(3, 199, 90, 0.2);
+              border-color: var(--border-green);
+              color: var(--naver-green-light);
+            "
+          >
+            다음 슬라이드 ▶
+          </button>
+        </div>
+      </footer>
+    </div>
+    <!-- Fullscreen Lightbox Modal -->
+    <div id="lightbox-modal" onclick="closeLightbox()">
+      <div class="lightbox-close-hint">클릭하거나 ESC 키를 눌러 닫기</div>
+      <img alt="Enlarged Preview" id="lightbox-image" src="" />
+    </div>
+    <!-- Core Interactive Script -->
+    <script>
+      let currentSlide = 1;
+      const totalSlides = 12;
+      let timerSeconds = 0;
+      let timerInterval = null;
+
+      // Auto-scaling logic (1920x1080 fixed stage)
+      function resizeStage() {
+        const stage = document.getElementById("presentation-stage");
+        const targetWidth = 1920;
+        const targetHeight = 1080;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        const scaleX = windowWidth / targetWidth;
+        const scaleY = windowHeight / targetHeight;
+        const scale = Math.min(scaleX, scaleY);
+
+        stage.style.transform = `scale(${scale})`;
+      }
+
+      window.addEventListener("resize", resizeStage);
+      window.addEventListener("DOMContentLoaded", () => {
+        resizeStage();
+        startTimer();
+      });
+
+      // Pacing Timer (10 Minutes)
+      function startTimer() {
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          const mins = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+          const secs = String(timerSeconds % 60).padStart(2, "0");
+          const el = document.getElementById("elapsed-time");
+          if (el) el.innerText = `${mins}:${secs} / 10:00`;
+
+          // Visual alert when passing 10 mins
+          if (timerSeconds > 600 && el) {
+            el.style.color = "#f43f5e";
+          }
+        }, 1000);
+      }
+
+      // Slide Navigation
+      function showSlide(index) {
+        if (index < 1 || index > totalSlides) return;
+
+        const currentEl = document.getElementById(`slide-${currentSlide}`);
+        if (currentEl) currentEl.classList.remove("active");
+
+        currentSlide = index;
+        const nextEl = document.getElementById(`slide-${currentSlide}`);
+        if (nextEl) nextEl.classList.add("active");
+
+        // Update Top slide counter
+        const counterEl = document.getElementById("slide-num");
+        if (counterEl) {
+          counterEl.innerText = `SLIDE ${String(currentSlide).padStart(2, "0")} / ${totalSlides}`;
+        }
+
+        // Update Bottom progress bar
+        const progressEl = document.getElementById("progress-bar");
+        if (progressEl) {
+          progressEl.style.width = `${(currentSlide / totalSlides) * 100}%`;
+        }
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides) {
+          showSlide(currentSlide + 1);
+        }
+      }
+
+      function prevSlide() {
+        if (currentSlide > 1) {
+          showSlide(currentSlide - 1);
+        }
+      }
+
+      // === 전체화면: Mac / Safari / 한글 입력 상태 대응 =====================
+      // e.key 는 한글 입력 상태에서 "ㄹ" 로 들어오기 때문에 e.code 로 판정합니다.
+      // Safari 구버전은 webkitRequestFullscreen 을 사용합니다.
+      function isFullscreen() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+        );
+      }
+
+      function enterFullscreen() {
+        const el = document.documentElement;
+        try {
+          if (el.requestFullscreen) {
+            const p = el.requestFullscreen({ navigationUI: "hide" });
+            if (p && p.catch) p.catch(() => {});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+          } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+          }
+        } catch (err) {
+          // 인자를 지원하지 않는 브라우저는 인자 없이 재시도
+          try {
+            if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            else if (el.requestFullscreen) el.requestFullscreen();
+          } catch (e2) {}
+        }
+      }
+
+      function exitFullscreen() {
+        try {
+          if (document.exitFullscreen) {
+            const p = document.exitFullscreen();
+            if (p && p.catch) p.catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } catch (err) {}
+      }
+
+      function toggleFullscreen() {
+        if (isFullscreen()) exitFullscreen();
+        else enterFullscreen();
+
+        // 전체화면 전환 후 스케일을 다시 계산
+        setTimeout(resizeStage, 120);
+        setTimeout(resizeStage, 420);
+      }
+
+      ["fullscreenchange", "webkitfullscreenchange"].forEach(function (evt) {
+        document.addEventListener(evt, function () {
+          setTimeout(resizeStage, 60);
+        });
+      });
+
+      // Keyboard Shortcuts
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.code === "KeyF" || e.key === "f" || e.key === "F") {
+          e.preventDefault();
+          toggleFullscreen();
+        } else if (e.key === "Escape") {
+          closeLightbox();
+        }
+      });
+
+      // Lightbox Functionality
+
+      //function openLightbox(container) {
+      //const img = container.querySelector("img");
+      // if (!img || img.style.display === "none" || !img.src) return;
+
+      // const modal = document.getElementById("lightbox-modal");
+      // const modalImg = document.getElementById("lightbox-image");
+      // modalImg.src = img.src;
+      // modal.classList.add("active");
+      //}
+
+      //function closeLightbox() {
+      // const modal = document.getElementById("lightbox-modal");
+      // modal.classList.remove("active");
+      //}
+
+      // Lightbox Functionality
+      let currentScale = 1;
+      let translateX = 0;
+      let translateY = 0;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+
+      function updateLightboxImage() {
+        const img = document.getElementById("lightbox-image");
+
+        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+
+        img.classList.toggle("zoomed", currentScale > 1);
+      }
+
+      function openLightbox(container) {
+        const img = container.querySelector("img");
+        if (!img || img.style.display === "none" || !img.src) return;
+
+        const modal = document.getElementById("lightbox-modal");
+        const modalImg = document.getElementById("lightbox-image");
+
+        modalImg.src = img.src;
+
+        // 每次打开时重置缩放
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+        updateLightboxImage();
+
+        modal.classList.add("active");
+      }
+
+      function closeLightbox() {
+        const modal = document.getElementById("lightbox-modal");
+        modal.classList.remove("active");
+
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+      }
+
+      // 点击图片放大 / 缩小
+      document
+        .getElementById("lightbox-image")
+        .addEventListener("click", function (e) {
+          e.stopPropagation();
+
+          if (currentScale === 1) {
+            currentScale = 2;
+          } else {
+            currentScale = 1;
+            translateX = 0;
+            translateY = 0;
+          }
+
+          updateLightboxImage();
+        });
+
+      // 滚轮缩放
+      document.getElementById("lightbox-image").addEventListener(
+        "wheel",
+        function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          currentScale += e.deltaY < 0 ? 0.2 : -0.2;
+          currentScale = Math.min(Math.max(currentScale, 1), 4);
+
+          if (currentScale === 1) {
+            translateX = 0;
+            translateY = 0;
+          }
+
+          updateLightboxImage();
+        },
+        { passive: false },
+      );
+
+      // 鼠标拖动
+      document
+        .getElementById("lightbox-image")
+        .addEventListener("mousedown", function (e) {
+          if (currentScale <= 1) return;
+
+          isDragging = true;
+          startX = e.clientX - translateX;
+          startY = e.clientY - translateY;
+          e.preventDefault();
+        });
+
+      document.addEventListener("mousemove", function (e) {
+        if (!isDragging) return;
+
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+
+        updateLightboxImage();
+      });
+
+      document.addEventListener("mouseup", function () {
+        isDragging = false;
+      });
+    </script>
+  </body>
+</html>
